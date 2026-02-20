@@ -1,0 +1,272 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\begin{document}
+\title{Adaptive Data Balancing via Cluster-Driven andSVM-Guided Pruning for Imbalanced Medical Imaging}
+\author{
+\IEEEauthorblockN{Norelhouda laribi, Fayc¸al touazi, Djamel Gaceb, Abdellah rezoug}
+\IEEEauthorblockA{LIMOSE Laboratory, Department of Computer Science, University M’Hamed Bougara, Boumerdes, Algeria\\n.laribi@univ-boumerdes.dz}
+}
+\maketitle
+\begin{abstract}
+Class imbalance and redundancy are major challenges in medical image anal-ysis, often causing deep learning models to favor majority classes while un-derperforming on rare but clinically critical cases. This paper proposes an au-tomated data pruning framework that balances datasets by selectively remov-ing redundant majority-class samples while preserving the most informative in-stances.Images are projected into a discrete latent space using a pretrainedViT Variational Autoencoder (ViT-VAE), clustered via K-means, and prunedusing an SVM-guided boundary selection strategy. Experiments conducted onthree medical imaging benchmarks Covid-19 chest X-rays, OASIS brain MRI,and HAM10000 skin lesions demonstrate that substantial dataset reduction canmaintain or improve classification performance. The results show that pruningeffectively mitigates bias, reduces training cost, and achieves performance com-parable to or better than data augmentation approaches.
+\end{abstract}
+\begin{IEEEkeywords}
+Class, ImbalanceData, PruningViT-VAELatent, Space, ClusteringSVM
+\end{IEEEkeywords}
+% ===== MAIN DOCUMENT CONTENT =====
+
+\section{Introduction}
+Class imbalance and redundancy are major challenges in medical image analysis, often causing deep learning models to favor majority classes while underperforming on rare but clinically critical cases. This paper proposes an automated data pruning framework that balances datasets by selectively removing redundant majority‑class samples while preserving the most informative instances. Images are projected into a discrete latent space using a pretrained ViT Variational Autoencoder (ViT‑VAE), clustered via K‑means, and pruned using an SVM‑guided boundary selection strategy. Experiments conducted on three medical imaging benchmarks—COVID‑19 chest X‑rays, OASIS brain MRI, and HAM10000 skin lesions—demonstrate that substantial dataset reduction can maintain or improve classification performance. The results show that pruning effectively mitigates bias, reduces training cost, and achieves performance comparable to or better than data augmentation approaches.
+Deep learning has achieved remarkable success in medical image analysis across modalities such as MRI, CT, X‑ray, and dermoscopy. However, its effectiveness is highly dependent on the availability of large and balanced datasets. In practice, medical datasets are often severely imbalanced, as common conditions dominate clinical data while rare but critical diseases remain underrepresented. This imbalance biases learning toward majority classes, leading to reduced sensitivity for minority conditions \cite{ref1}.
+Beyond imbalance, redundancy is another overlooked issue. Medical imaging modalities frequently produce highly correlated samples, such as adjacent MRI slices or near‑duplicate X‑rays, which inflate the size of the dataset without increasing the diversity \cite{ref3,ref4}. As a result, models may overfit repetitive patterns and generalize poorly.
+Existing solutions are primarily based on resampling, data augmentation, or cost‑sensitive learning \cite{ref2}. Although effective in some cases, these approaches may introduce synthetic artifacts, increase computational complexity, or fail to address redundancy. This motivates an alternative strategy: dataset pruning. Instead of generating new data, pruning aims to remove redundant samples while retaining those that are most informative for decision boundaries.
+In this work, we propose a self‑adaptive pruning framework that operates in a learned latent space. By combining ViT‑VAE‑based feature discretization, K‑means clustering, and SVM‑guided selection, the method automatically identifies and preserves boundary‑defining samples while discarding redundant majority‑class instances. The framework is evaluated on three heterogeneous medical imaging datasets, demonstrating its robustness and scalability.
+
+\section{Related Work}
+Class imbalance remains a major challenge in medical image analysis, as it biases deep learning models toward majority classes and often results in poor sensitivity on minority cases corresponding to rare yet clinically critical lesions. The literature generally addresses this problem through two complementary directions: data-level approaches, which rebalance the training distribution, and algorithm-level approaches, which modify the learning objective or the model behavior. Recent surveys confirm that imbalance causes issues such as majority-class gradient dominance and suboptimal generalization in medical tasks. For instance, Ghosh et al.~[10] discuss imbalance-related optimization difficulties and highlight regularization strategies across deep architectures, while Araf et al.~[11] emphasize the effectiveness of direct cost-sensitive learning compared to resampling for improving sensitivity and AUC in medical diagnosis. Similarly, Salmi et al.~[12] categorize current solutions into data-level, algorithm-level, and hybrid methods, showing that no single technique universally dominates across datasets and imaging modalities.
+Data-level strategies remain the most widely adopted, ranging from classical resampling to advanced augmentation and synthetic data generation. Several recent studies rely on SMOTE-based pipelines and hybrid variants (e.g., SMOTEENN and boosting combinations) to improve performance across medical classification tasks [13–16]. In infectious disease settings, Hyper-ADASYN combined with feature selection achieved strong COVID-19 detection accuracy [17], while augmentation strategies have been explored for skin lesions and brain tumors [18–21]. More recently, synthetic data generation using GANs has gained attention to explicitly expand minority classes, including STGAN for realistic lesion synthesis [22] and hybrid GAN-based frameworks integrating oversampling or anomaly detection [23, 24], with comparative studies also showing strong generalization when combining GAN augmentation with traditional transformations [25]. Beyond data manipulation, algorithmic solutions include adaptive loss design [26], metadata-driven feature strategies [27], and modern architectures such as DinoV2-based pipelines [28] or semi-supervised detection frameworks [29]. Despite these advances, key limitations remain, including the risk of generating unrealistic samples, higher computational cost, and increased training complexity, motivating efficient alternatives that reduce redundancy in majority classes through pruning-based balancing while preserving minority-class performance.
+\section{Proposed Method}
+The proposed framework addresses class imbalance by pruning redundant majority-class samples while preserving discriminative information. We adopt a Vision Transformer-based Variational Autoencoder (ViT-VAE) architecture to learn feature representations in latent space, building on the foundational Vision Transformer model by Dosovitskiy et al.~[5] and the Variational Autoencoder framework [6]. Hybrid ViT-VAE variants have been used successfully in anomaly detection and generative modeling tasks.
+The pipeline consists of three main stages: latent feature extraction using ViT-VAE, clustering in latent space, and SVM-guided pruning.
+\subsection{Latent Feature Discretization}
+A pretrained Vector Quantized Variational Autoencoder (ViT-VAE) encodes each image $x_i \in \mathbb{R}^{h\times w\times c}$ into a discrete latent representation:
+\begin{equation}
+z_i = \text{Enc}(x_i)
+\label{eq:latent}
+\end{equation}
+Each latent vector is quantized by selecting the nearest codebook embedding:
+\begin{equation}
+q(z_i) = \arg\min_{e_k \in E} \|z_i - e_k\|_2
+\label{eq:quant}
+\end{equation}
+This discrete representation captures salient visual patterns while reducing redundancy.
+\subsection{Latent Space Clustering}
+
+\section{Latent Space Clustering}
+The set of utilized codebook embeddings is clustered using K-means:
+\begin{equation}
+\{C_{1},\dots,C_{K}\}
+\label{eq:codebook-set}
+\end{equation}
+\begin{equation}
+K\text{(cid:88)}
+\label{eq:Kcid}
+\end{equation}
+\begin{equation}
+k=1,\; e\in C_{k},\; \|e-\mu_{k}\|^{2}
+\label{eq:distance}
+\end{equation}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{images/figure1.png}
+\caption{The proposed dataset pruning approach architecture overview for addressing class imbalance: (1) input images are encoded into discrete latent representations using a ViT-VAE; (2) the dataset is constructed in the discrete latent space based on image characterization; (3) K-means clustering groups semantically similar representations; (4) a One-Class SVM identifies borderline samples within each cluster; redundant majority class instances are pruned based on SVM decision scores; (5) the final balanced dataset preserves informative samples while reducing bias toward majority classes; (6) the pruned dataset is then used to train deep learning models, improving generalization and robustness in downstream classification tasks.}
+\label{fig:pruning-architecture}
+\end{figure}
+\section{SVM-Guided Pruning}
+
+\section{SVM-Guided Pruning}
+Within each cluster, a One-Class SVM is trained to model the data distribution:
+\begin{equation}
+\min_{w,\rho,\xi}\; \frac{1}{2}\|w\|^{2} + \frac{1}{\nu\,|C_{k}|}\sum_{i}\xi_{i} - \rho
+\label{eq:svm_obj}
+\end{equation}
+Samples near the decision boundary are selected as informative:
+\begin{equation}
+B_{k} = \{\, e \in C_{k} \mid |f_{k}(e)| \le \epsilon \,\}
+\label{eq:boundary_samples}
+\end{equation}
+Additional near‑boundary samples may be included to satisfy target pruning ratios. Two strategies are explored: (1) uniform pruning with fixed reduction ratios, and (2) balanced pruning that equalizes class sizes.
+\section{EXPERIMENTS AND RESULTS}
+\subsection{Datasets}
+Experiments were conducted on three public datasets: Covid‑19 chest X‑rays (4 classes) \cite{ref7}, OASIS brain MRI (4 classes) \cite{ref8}, and HAM10000 skin lesions (7 classes) \cite{ref9}. All datasets exhibit significant class imbalance. Train/test splits were fixed across all experiments to ensure fair comparison.
+\subsubsection{Adaptive Data Balancing via Cluster‑Driven and SVM‑Guided Pruning for Imbalanced Medical Imaging (Norelhouda laribi)}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{images/figure2.png}
+\caption{Overview of the proposed ViT-VAE and SVM-guided dataset pruning framework. Latent Space Representation: The imbalanced dataset is projected into a latent feature space, and majority classes are identified for pruning. K-Means Grouping: Each selected majority class is partitioned into subclasses using K-means clustering to capture intra-class structure. SVM-Guided Pruning: Support vectors and near-boundary samples are identified using SVM, and redundant majority samples are removed to obtain a more balanced dataset.}
+\label{fig:overview}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{images/figure3.png}
+\caption{ViT-VAE reconstruction examples across three medical imaging datasets. For each dataset, the left image is the original sample and the right image is the corresponding reconstruction. (a) OASIS, (b) COVID-19, (c) HAM10000.}
+\label{fig:reconstructions}
+\end{figure}
+\begin{table}[htbp]
+\centering
+\caption{Dataset statistics}
+\label{tab:stats}
+\begin{tabular}{ll}
+\hline
+Dataset & Train count \\
+\hline
+COVID-19 Dataset (21,165 images) & 2870480010758150 \\
+OASIS Dataset (66,331 images) & 536088088041026511292 \\
+HAM10000 Dataset (10,015 images) & 4067888293317240 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Class distribution of the COVID-19, OASIS, and HAM10000 datasets showing training, testing, and total samples per class.}
+\label{tab:class_distribution}
+\begin{tabular}{l}
+\hline
+74612122702042 \\
+10170220783060 \\
+1340220220100652823 \\
+36166012134510192 \\
+50848110364147300 \\
+670011001100510330140115 \\
+\hline
+\end{tabular}
+\end{table}
+\section{Experimental Setup}
+ViT-VAE models were trained exclusively on the training data to avoid information leakage. To investigate majority-class redundancy and evaluate the ability of each dataset to be reduced at different scales, we applied two pruning strategies: uniform pruning and balanced pruning.
+In the uniform pruning setting, fixed pruning ratios of 25\%, 50\%, and 75\% were applied to the majority classes in the training set. For COVID-19, pruning targeted the Normal and Lung Opacity classes. For OASIS, the two dominant classes (NonDemented and VeryMildDemented) were pruned. For HAM10000, the three largest classes (nv, mel, and bkl) were selected. In the balanced pruning setting, pruning ratios were chosen to progressively reduce class imbalance while preserving sufficient training diversity. For COVID-19 and OASIS, pruning ratios of 25\% and 50\% were applied to the majority classes. For HAM10000, more aggressive imbalance was addressed using pruning ratios of 10\%, 40\%, and 80\% on the three dominant classes.
+In all cases, pruning was applied exclusively to the training set, and test sets were kept unchanged to ensure fair and unbiased evaluation. The quality of the learned latent representations was verified through visual reconstruction examples across all datasets (see Fig. 3), showing that the model preserves the main anatomical and structural patterns relevant for classification.
+\section{Results: Post-pruning}
+Table 2 highlights the impact of pruning strategies across three medical imaging datasets with different imbalance characteristics. Across all architectures, both pruning strategies substantially outperform baseline training, confirming that removing redundant majority-class samples effectively reduces model bias.
+
+stance, on OASIS, ResNet50 improves from 89.20\% baseline accuracy to 99.83\% with uniform pruning, whileon COVID-19 it rises from 63.30\% to 95.42\%, demonstrating the strong effect of redundancy reduction. Evenon the more challenging HAM10000 dataset, ResNet50 increases from 77.80\% to 85.91\% under uniform prun-ing. Uniform pruning yields the highest absolute performance, particularly on OASIS and COVID-19, wherestrong redundancy exists and near-perfect scores are achieved with up to 75\% data reduction. Balanced pruning,while slightly less performant,achieving 96.01\% on OASIS and 95.47\% on COVID-19 for ResNet50 provid-ing more stable and consistent results across datasets, especially on HAM10000, where extreme imbalancelimits aggressive pruning. Notably, ResNet50 consistently achieves the best trade-off between accuracy androbustness, indicating that deeper architectures benefit most from boundary-focused sample selection. Finally,these results demonstrate that informed pruning can match or surpass full-dataset training while significantlyreducing dataset size and computational cost.
+\begin{table}[htbp]
+\centering
+\caption{Performance comparison across datasets. Metrics: Accuracy (Acc), Precision (Pre), Recall (Rec), and F1-score.}
+\label{tab:performance}
+\begin{tabular}{l}
+\hline
+Model \\
+OASIS \\
+VGG16 \\
+Strategy \\
+Xception \\
+F180.2699.7895.2591.5099.5295.2887.5099.7693.7187.5099.8396.14 \\
+BaselineUniform pruning (best)Balanced pruningBaselineUniform pruning (best)Balanced pruningBaselineUniform pruning (best)Balanced pruningBaselineUniform pruning (best)Balanced pruning \\
+Pre80.5499.7895.9892.0099.5295.9988.0099.7694.8688.0099.8396.63 \\
+Acc80.0099.7895.0792.5099.5295.1189.2099.7693.4389.2099.8396.01 \\
+Rec80.0099.7895.0791.0099.5295.1187.0099.7693.4387.0099.8396.01 \\
+Acc72.1081.4276.2174.9078.8473.8276.7082.6176.6677.8085.9176.46 \\
+Acc82.3795.4994.7375.0095.3095.4480.2895.4293.9663.3095.4295.47 \\
+F187.3895.4894.7583.0895.2995.4586.2595.4193.9777.2595.4395.46 \\
+COVID-19RecPre97.6979.0495.4995.5194.7394.8098.2071.9995.3095.2995.4495.4798.9776.4395.4295.4193.9693.9999.7463.0495.4295.4495.4795.46 \\
+HAM10000RecPre58.5065.0081.4278.7376.2179.1771.0073.0078.4280.1773.8278.1957.0073.4082.6181.2276.6678.6568.3072.6085.9185.3676.4680.75 \\
+\hline
+\end{tabular}
+\end{table}
+
+HAM10000RecPre58.5065.0081.4278.7376.2179.1771.0073.0078.4280.1773.8278.1957.0073.4082.6181.2276.6678.6568.3072.6085.9185.3676.4680.75
+F159.5079.8676.9972.0080.1775.3561.3081.6676.8567.8085.4177.80
+EfficientNet
+ResNet50
+Table 2 demonstrates that the key contribution of this work lies in showing that intelligent latent‑space pruning can not only reduce dataset size substantially but also improve classification performance across multiple medical imaging modalities and architectures. Unlike traditional imbalance solutions that add synthetic data or modify loss functions, the proposed ViT‑VAE + clustering + SVM framework selectively removes redundant majority‑class samples while preserving boundary‑defining instances, leading to consistent gains in Accuracy and F1‑score, particularly on OASIS and COVID‑19, where redundancy is high. The results suggest that excessive redundancy in the training data biases the model toward majority‑class features, reducing its sensitivity to rare but clinically critical samples. By removing redundant samples from majority classes, the proposed pruning strategy rebalances the learning process and improves sensitivity to minority classes without increasing model complexity or relying on synthetic data, making it an efficient alternative to augmentation‑based imbalance methods.
+5.
+\section{Discussion}
+This study demonstrates that dataset pruning constitutes an effective and computationally efficient alternative solution to traditional class imbalance handling strategies in medical imaging that use oversampling methods based on data augmentations or GAN’s approaches. Conversely, the proposed approach explores a learned latent space and selectively retains samples that lie near decision boundaries; the proposed framework reduces the dominance of majority classes by preserving only the most informative instances. This strategy not only reduces dataset bias but also lowers training complexity, enabling models to generalize better from smaller, more representative subsets of data.
+The experimental results highlight that the effectiveness of pruning depends on both dataset characteristics and the chosen pruning strategy. Uniform pruning applying the same selection ratio to the majority classes proved particularly effective for moderately imbalanced datasets such as OASIS and COVID‑19, where a large fraction of samples is redundant. In these settings, removing up to 50\%–75\% of majority‑class data led to notable performance gains, suggesting that the most informative samples are concentrated near class boundaries rather than being uniformly distributed across the dataset. By contrast, balanced pruning aligns majority‑class sizes to the minority classes, limits the bias toward dominant classes, and strengthens minority‑class recognition by enforcing a more equitable learning process. This indicates that, under imbalance, increasing data volume does not necessarily improve performance when much of the additional data is redundant.
+Int J Inf \& Commun Technol, Vol. 99, No. 1, Month 2099: 1–1x
+Int J Inf \& Commun Technol
+ISSN: 2252-8776
+❒
+7
+Despite its advantages, pruning alone may be insufficient in scenarios where minority classes contain only a handful of samples. In such cases, aggressive pruning reduces important diversity of the dataset, which indicates that in this context, pruning should be viewed as a complementary strategy rather than a standalone solution. Combining latent‑space pruning with targeted data augmentation or generative synthesis for minority classes represents a promising direction to preserve rare pathological patterns while maintaining dataset efficiency.
+The proposed framework demonstrates a scalable and automated way to handle class imbalance in medical image analysis. Unlike augmentation‑based approaches, it does not introduce synthetic artifacts or require task‑specific tuning. Future work will investigate adaptive pruning thresholds that dynamically adjust to dataset structure, as well as hybrid pruning including augmentation pipelines to further enhance performance on rare disease categories and large‑scale multimodal medical datasets.
+6.
+
+\section{Conclusion}
+This work presented an automated latent-space pruning framework to address class imbalance in medical imaging datasets. By combining ViT‑VAE‑based representation learning, clustering, and SVM‑guided sample selection, the proposed approach effectively removes redundant majority‑class samples while preserving the most informative instances. Experimental results on three heterogeneous medical imaging datasets demonstrate that substantial dataset reduction can maintain or improve classification performance compared to full‑dataset training and augmentation‑based methods. These findings confirm that informed data pruning is a practical and efficient strategy for mitigating class imbalance while reducing computational cost and enhancing model generalization. Future work will explore hybrid balancing strategies designed for medical datasets with limited samples and low redundancy. In such cases, relying on both pruning and data augmentation to remove useful information, while augmenting the size of minority classes. This hybrid strategy aims to strike a better balance between reducing redundancy and increasing diversity, particularly in small clinical datasets like HAM10000 where both scarcity and imbalance are present.
+\section{Funding Information}
+The authors declare that this research received no external funding and was conducted without financial support from any public, commercial, or not‑for‑profit funding agencies.
+\section{Author Contributions Statement}
+C M So Va 
+Name of Author Fo Norelhouda Laribi ✓ ✓ ✓ ✓ ✓✓ ✓ ✓ ✓ ✓ Fayc¸al Touazi ✓ ✓ ✓ ✓ Djamel Gaceb Abdellah Rezoug 
+Su 
+P 
+Fu 
+I R D O E Vi ✓ ✓ ✓ ✓✓✓ 
+✓ ✓ ✓ ✓✓ ✓ ✓ ✓✓ 
+✓
+\section{Conflict of Interest Statement}
+The authors declare that there are no conflicts of interest regarding the publication of this paper.
+\section{Data Availability}
+
+\section{Data Availability}
+The datasets used in this study were obtained from publicly available sources on the Kaggle platform, and the corresponding references are properly cited in the reference section.
+\section{References}
+C. Mosquera, L. Ferrer, D. H. Milone, D. Luna, and E. Ferrante, “Class imbalance on medical image classification: towards better evaluation practices for discrimination and calibration performance,” \textit{European Radiology}, vol. 34, no. 12, pp. 7895–7903, 2024.
+H. Ding, N. Huang, Y. Wu, and X. Cui, “Improving imbalanced medical image classification through GAN-based data augmentation methods,” \textit{Pattern Recognition}, vol. 166, p. 111680, 2025.
+Adaptive Data Balancing via Cluster-Driven and SVM-Guided Pruning for Imbalanced Medical Imaging, Norelhouda Laribi.
+S. Rajaraman, G. Zamzmi, F. Yang, Z. Liang, Z. Xue and S. Antani, “Semantically redundant training data removal and deep model classification performance: A study with chest X-rays,” \textit{Comput. Med. Imaging Graph.}, vol. 115, art. 102379, 2024.
+S. Kim, H. Park and S.-H. Park, “A review of deep learning-based reconstruction methods for accelerated MRI using spatiotemporal and multi-contrast redundancies,” \textit{Biomed. Eng. Lett.}, vol. 14, pp. 1221–1242, 2024.
+A. Dosovitskiy, L. Beyer, A. Kolesnikov, et al., “An Image is Worth 16$\times$16 Words: Transformers for Image Recognition at Scale,” in \textit{Proc. ICLR}, 2021.
+L. Zhang, S. Ren, Y. Liu, X. Li, Z. Wang, Y. Zhou, H. Yao, Z. Zheng, W. Nie, G. Liu and Z. Yu, “OpenVision 3: A Family of Unified Visual Encoder for Both Understanding and Generation,” \textit{arXiv}, 2026.
+P. Tschandl, C. Rosendahl, and H. Kittler, “The HAM10000 dataset: A large collection of multi-source dermatoscopic images of common pigmented skin lesions,” \textit{Sci. Data}, vol. 5, Art. no. 180161, 2018.
+
+S. Rajaraman, G. Zamzmi, F. Yang, Z. Liang, Z. Xue and S. Antani, “Semantically redundant training data removal and deep model classification performance: A study with chest X-rays,” Comput. Med. Imaging Graph., vol. 115, art. 102379, 2024.
+S. Kim, H. Park and S.-H. Park, “A review of deep learning-based reconstruction methods for accelerated MRI using spatiotemporal and multi-contrast redundancies,” Biomed. Eng. Lett., vol. 14, pp. 1221–1242, 2024.
+A. Dosovitskiy, L. Beyer, A. Kolesnikov, et al., “An Image is Worth 16$\times$16 Words: Transformers for Image Recognition at Scale,” in Proc. ICLR, 2021.
+L. Zhang, S. Ren, Y. Liu, X. Li, Z. Wang, Y. Zhou, H. Yao, Z. Zheng, W. Nie, G. Liu and Z. Yu, “OpenVision 3: A Family of Unified Visual Encoder for Both Understanding and Generation,” arXiv, 2026.
+Radiography Database, Kaggle.
+“COVID-19 dataset,” 2022.
+K. Ghosh, C. Bellinger, R. Corizzo, P. Branco, B. Krawczyk, and N. Japkowicz, “The class imbalance problem in deep learning,” Mach. Learn., vol. 113, no. 7, pp. 4845–4901, 2024.
+I. Araf, A. Idri, and I. Chairi, “Cost-sensitive learning for imbalanced medical data: a review,” Artif. Intell. Rev., vol. 57, no. 4, p.80, 2024.
+M. Salmi, D. Atif, D. Oliva, A. Abraham, and S. Ventura, “Handling imbalanced medical datasets: review of a decade of research,” Artif. Intell. Rev., vol. 57, no. 10, p. 273, 2024.
+F. Gurcan and A. Soylu, “Learning from imbalanced data: Integration of advanced resampling techniques and machine learning models for enhanced cancer diagnosis and prognosis,” Cancers, vol. 16, no. 19, p. 3417, 2024.
+S. Bacha, H. Ning, B. Mostefa, D. S. Sarwatt, and S. Dhelim, “A novel double pruning method for imbalanced data using information entropy and roulette wheel selection for breast cancer diagnosis,” arXiv preprint, 2025.
+
+entropy and roulette wheel selection for breast cancer diagnosis,” arXiv preprint , 2025.
+[15] A. M. Sowjanya and O. Mrudula, “Effective treatment of imbalanced datasets in health care using modified SMOTE coupled with stacked deep learning algorithms,” Appl. Nanosci., vol. 13, no. 3, pp. 1829--1840, 2023.
+[16] A. Martinez-Velasco, L. Mart\'inez-Villase\~nor, and L. Miralles-Pechu\'an, “Addressing class imbalance in healthcare data: Machinelearning solutions for age-related macular degeneration and preeclampsia,” IEEE Latin Am. Trans., vol. 22, no. 10, pp. 806--820, 2024.
+[17] H. Mohammedqasim, A. A. Jasim, A. Mohammedqasem, and O. Ata, “Enhancing predictive performance in COVID-19 healthcaredatasets: a case study based on hyper ADASYN over-sampling and genetic feature selection,” J. Eng. Sci. Technol., vol. 19, no. 2, pp. 598--617, 2024.
+[18] U. Saha, I. U. Ahamed, M. Imran, M. A. Ahamed, U. D. Gupta, and A. A. Hossain, “YOLOv8-based deep learning approachfor realtime skin lesion classification using the HAM10000 dataset,” in 2024 IEEE Int. Conf. E-health Netw., Appl. \& Services(HealthCom), 2024.
+[19] M. Alsaidi, M. T. Jan, A. Altaher, H. Zhuang, and X. Zhu, “Tackling the class imbalanced dermoscopic image classification using data augmentation and GAN,” Multimedia Tools Appl., vol. 83, no. 16, pp. 49121--49147, 2024.
+[20] N. A. Zebari, A. A. H. Alkurdi, R. B. Marqas, and M. S. Salih, “Enhancing brain tumor classification with data augmentation and DenseNet121,” Acad. J. Nawroz Univ., vol. 12, no. 4, pp. 323--334, 2023.
+[21] D. R. Beddiar, M. Oussalah, U. Muhammad, and T. Sepp\"anen, “A deep learning based data augmentation method to improve COVID-19 detection from medical imaging,” Knowl.-Based Syst., vol. 280, p. 110985, 2023.
+[22] Q. Su, H. N. A. Hamed, M. A. Isa, X. Hao, and X. Dai, “A GAN-based data augmentation method for imbalanced multi-class skin lesion classification,” IEEE Access, vol. 12, pp. 16498--16513, 2024.
+[23] T. Suresh, Z. Brijet, and T. D. Subha, “Imbalanced medical disease dataset classification using enhanced generative adversarial network,” Comput. Methods Biomech. Biomed. Eng., vol. 26, no. 14, pp. 1702--1718, 2023.
+[24] H. Ding, N. Huang, and X. Cui, “Leveraging GANs data augmentation for imbalanced medical image classification,” Appl. Soft Comput., vol. 165, p. 112050, 2024.
+
+F. Touazi, D. Gaceb, A. Tadrist, and S. Bakiri, ``Comparative evaluation of StyleGAN3-based augmentation strategies for enhanced medical image classification,'' in Proc. Eighth Int. Workshop Comput. Modeling Intell. Syst. (CMIS 2025), Zaporizhzhia, Ukraine, May 2025, note: May 5, 2025.
+T. Huynh, A. Nibali, and Z. He, ``Semi-supervised learning for medical image classification using imbalanced training data,'' Comput. Methods Programs Biomed., vol.~216, p.~106628, 2022.
+A. Adebiyi, N. Abdalnabi, E.~H. Smith, J. Hirner, E.~J. Simoes, M. Becevic, and P. Rao, ``Accurate skin lesion classification using multimodal learning on the HAM10000 dataset,'' medRxiv, 2024.
+J. Mohan, A. Sivasubramanian, V. Ravi, and others, ``Enhancing skin disease classification leveraging transformer-based deep learning architectures and explainable AI,'' Comput. Biol. Med., vol.~190, p.~110007, 2025.
+Y. Yang, Y. Jin, Q. Tian, Y. Yang, W. Qin, and X. Ke, ``Enhancing gastrointestinal diagnostics with YOLO-based deep learning techniques,'' 2024.
+Int J Inf \& Commun Technol, Vol.~99, No.~1, Month 2099: 1--1x.
+
+% ===== REFERENCES =====
+
+\begin{thebibliography}{99}
+\bibitem{ref1}
+C. Mosquera, L. Ferrer, D. H. Milone, D. Luna, and E. Ferrante, “Class imbalance on medical image classification: towards better evaluation practices for discrimination and calibration performance,” European Radiology, vol. 34, no. 12, pp. 7895–7903, 2024.
+\bibitem{ref2}
+H. Ding, N. Huang, Y. Wu, and X. Cui, “Improving imbalanced medical image classification through GAN-based data augmentation methods,” Pattern Recognition, vol. 166, p. 111680, 2025. doi: https://doi.org/10.1016/j.patcog.2025.111680.
+\bibitem{ref3}
+K. Ghosh, C. Bellinger, R. Corizzo, P. Branco, B. Krawczyk, and N. Japkowicz, “The class imbalance problem in deep learning,” Mach. Learn., vol. 113, no. 7, pp. 4845–4901, 2024.
+\bibitem{ref4}
+I. Araf, A. Idri, and I. Chairi, “Cost-sensitive learning for imbalanced medical data: a review,” Artif. Intell. Rev., vol. 57, no. 4, p.80, 2024.
+\bibitem{ref5}
+M. Salmi, D. Atif, D. Oliva, A. Abraham, and S. Ventura, “Handling imbalanced medical datasets: review of a decade of research,” Artif. Intell. Rev., vol. 57, no. 10, p. 273, 2024.
+\bibitem{ref6}
+F. Gurcan and A. Soylu, “Learning from imbalanced data: Integration of advanced resampling techniques and machine learning models for enhanced cancer diagnosis and prognosis,” Cancers, vol. 16, no. 19, p. 3417, 2024.
+\bibitem{ref7}
+S. Bacha, H. Ning, B. Mostefa, D. S. Sarwatt, and S. Dhelim, “A novel double pruning method for imbalanced data using information entropy and roulette wheel selection for breast cancer diagnosis,” arXiv preprint arXiv:2503.12239, 2025.
+\bibitem{ref8}
+A. M. Sowjanya and O. Mrudula, “Effective treatment of imbalanced datasets in health care using modified SMOTE coupled with stacked deep learning algorithms,” Appl. Nanosci., vol. 13, no. 3, pp. 1829–1840, 2023.
+\bibitem{ref9}
+A. Martinez-Velasco, L. Martinez-Villaseñor, and L. Miralles-Pechuan, “Addressing class imbalance in healthcare data: Machine learning solutions for age-related macular degeneration and preeclampsia,” IEEE Latin Am. Trans., vol. 22, no. 10, pp. 806–820, 2024.
+\bibitem{ref10}
+H. Mohammedqasim, A. A. Jasim, A. Mohammedqasem, and O. Ata, “Enhancing predictive performance in COVID-19 healthcare datasets: a case study based on hyper ADASYN over-sampling and genetic feature selection,” J. Eng. Sci. Technol., vol. 19, no. 2, pp. 598–617, 2024.
+\bibitem{ref11}
+U. Saha, I. U. Ahamed, M. Imran, M. A. Ahamed, U. D. Gupta, and A. A. Hossain, “YOLOv8-based deep learning approach for real-time skin lesion classification using the HAM10000 dataset,” in 2024 IEEE Int. Conf. E-health Netw., Appl. & Services (HealthCom), 2024.
+\bibitem{ref12}
+M. Alsaidi, M. T. Jan, A. Altaher, H. Zhuang, and X. Zhu, “Tackling the class imbalanced dermoscopic image classification using data augmentation and GAN,” Multimedia Tools Appl., vol. 83, no. 16, pp. 49121–49147, 2024.
+\bibitem{ref13}
+N. A. Zebari, A. A. H. Alkurdi, R. B. Marqas, and M. S. Salih, “Enhancing brain tumor classification with data augmentation and DenseNet121,” Acad. J. Nawroz Univ., vol. 12, no. 4, pp. 323–334, 2023.
+\bibitem{ref14}
+D. R. Beddiar, M. Oussalah, U. Muhammad, and T. Seppänen, “A deep learning based data augmentation method to improve COVID-19 detection from medical imaging,” Knowl.-Based Syst., vol. 280, p. 110985, 2023.
+\bibitem{ref15}
+Q. Su, H. N. A. Hamed, M. A. Isa, X. Hao, and X. Dai
+\end{document}
